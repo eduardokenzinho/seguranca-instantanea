@@ -57,8 +57,13 @@
             function getUTMDefaults() {
                 const defaults = {
                     utm_source: "google",
-                    utm_medium: "cpc",
-                    utm_campaign: "campanha_padrao"
+                    utm_campaign: "{campaignid}",
+                    utm_medium: "{adgroupid}",
+                    utm_content: "{creative}",
+                    utm_term: "{placement}::{keyword}",
+                    keyword: "{keyword}",
+                    device: "{device}",
+                    network: "{network}"
                 };
                 return Object.assign({}, defaults, window.UTM_OVERRIDES || {});
             }
@@ -75,7 +80,7 @@
                     }
 
                     const defaults = getUTMDefaults();
-                    const utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
+                    const utmKeys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','keyword','device','network'];
 
                     utmKeys.forEach(key => {
                         if (!targetParams.has(key)) {
